@@ -16,7 +16,7 @@ on:
         description: 'Type of build (test, build, size-analysis, release)'
         required: false
         type: string
-        default: 'build'
+        default: 'test'
       java-version:
         description: 'Version of Java to use for build'
         required: false
@@ -163,9 +163,9 @@ jobs:
       - name: Rename build artifacts
         run: |
           mkdir -p $GITHUB_WORKSPACE/build-artifacts
-          mv build/outputs/flutter-apk/app-${{ steps.build_options.outputs.flavor }}-release.apk $GITHUB_WORKSPACE/build-artifacts/${{ inputs.app-name }}_${{ steps.build_options.outputs.version_name }}.apk
-          mv build/outputs/bundle/${{ steps.build_options.outputs.flavor }}Release/app-${{ steps.build_options.outputs.flavor }}-release.aab $GITHUB_WORKSPACE/build-artifacts/${{ inputs.app-name }}_${{ steps.build_options.outputs.version_name }}.aab
-          mv build/symbols $GITHUB_WORKSPACE/build-artifacts/symbols
+          mv build/app/outputs/flutter-apk/app-${{ steps.build_options.outputs.flavor }}-release.apk $GITHUB_WORKSPACE/build-artifacts/${{ inputs.app-name }}_${{ steps.build_options.outputs.version_name }}.apk
+          mv build/app/outputs/bundle/${{ steps.build_options.outputs.flavor }}Release/app-${{ steps.build_options.outputs.flavor }}-release.aab $GITHUB_WORKSPACE/build-artifacts/${{ inputs.app-name }}_${{ steps.build_options.outputs.version_name }}.aab
+          mv build/app/symbols $GITHUB_WORKSPACE/build-artifacts/symbols
 
       - name: Upload APK
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
