@@ -13,15 +13,10 @@ on:
         required: false
         type: string
       build-type:
-        description: 'Type of build to perform'
+        description: 'Type of build (test, build, size-analysis, release)'
         required: false
+        type: string
         default: 'build'
-        type: choice
-        options:
-          - test
-          - build
-          - size-analysis
-          - release
       java-version:
         description: 'Version of Java to use for build'
         required: false
@@ -125,8 +120,12 @@ jobs:
 
       - name: Set up keystore
         id: keystore
-        if: ${{ secrets.KEYSTORE_BASE64 != '' && github.event.pull_request.head.repo.fork == false }}
+        if: ${{ github.event.pull_request.head.repo.fork == false }}
         run: |
+          if [ -z "${{ secrets.KEYSTORE_BASE64 }}" ]; then
+            echo "Keystore secret is empty, skipping signing."
+            exit 0
+          fi
           {
             echo keyPassword=${{ secrets.KEY_PASSWORD }}
             echo storePassword=${{ secrets.KEYSTORE_PASSWORD }}
