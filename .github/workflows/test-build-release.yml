@@ -9,39 +9,39 @@ on:
         required: false
         type: string
       app-name:
-        description: 'Name of the app (used for Artifacts)'
+        description: "Name of the app (used for Artifacts)"
         required: false
         type: string
       build-type:
-        description: 'Type of build (test, build, size-analysis, release)'
+        description: "Type of build (test, build, size-analysis, release)"
         required: false
         type: string
-        default: 'test'
+        default: "test"
       java-version:
-        description: 'Version of Java to use for build'
+        description: "Version of Java to use for build"
         required: false
-        default: '21'
+        default: "21"
         type: string
       working-directory:
-        description: 'The directory to run the workflow in (relative to the repository root)'
+        description: "The directory to run the workflow in (relative to the repository root)"
         required: false
-        default: '.'
+        default: "."
         type: string
       bot-app-id:
-        description: 'GitHub App ID for Release creation'
+        description: "GitHub App ID for Release creation"
         required: false
         type: string
     secrets:
-        KEY_PASSWORD:
-            required: false
-        KEYSTORE_PASSWORD:
-            required: false
-        KEY_ALIAS:
-            required: false
-        KEYSTORE_BASE64:
-            required: false
-        BOT_APP_PRIVATE_KEY:
-            required: false
+      KEY_PASSWORD:
+        required: false
+      KEYSTORE_PASSWORD:
+        required: false
+      KEY_ALIAS:
+        required: false
+      KEYSTORE_BASE64:
+        required: false
+      BOT_APP_PRIVATE_KEY:
+        required: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -106,7 +106,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
         with:
-          distribution: 'temurin'
+          distribution: "temurin"
           java-version: ${{ inputs.java-version }}
 
       - name: Update pubspec.yaml version
@@ -162,10 +162,10 @@ jobs:
 
       - name: Rename build artifacts
         run: |
-          mkdir -p $GITHUB_WORKSPACE/build-artifacts
-          mv build/app/outputs/flutter-apk/app-${{ steps.build_options.outputs.flavor }}-release.apk $GITHUB_WORKSPACE/build-artifacts/${{ inputs.app-name }}_${{ steps.build_options.outputs.version_name }}.apk
-          mv build/app/outputs/bundle/${{ steps.build_options.outputs.flavor }}Release/app-${{ steps.build_options.outputs.flavor }}-release.aab $GITHUB_WORKSPACE/build-artifacts/${{ inputs.app-name }}_${{ steps.build_options.outputs.version_name }}.aab
-          mv build/app/symbols $GITHUB_WORKSPACE/build-artifacts/symbols
+          mkdir -p "$GITHUB_WORKSPACE/build-artifacts"
+          mv build/app/outputs/flutter-apk/app-${{ steps.build_options.outputs.flavor }}-release.apk "$GITHUB_WORKSPACE/build-artifacts/${{ inputs.app-name }}_${{ steps.build_options.outputs.version_name }}.apk"
+          mv build/app/outputs/bundle/${{ steps.build_options.outputs.flavor }}Release/app-${{ steps.build_options.outputs.flavor }}-release.aab "$GITHUB_WORKSPACE/build-artifacts/${{ inputs.app-name }}_${{ steps.build_options.outputs.version_name }}.aab"
+          mv build/app/symbols "$GITHUB_WORKSPACE/build-artifacts/symbols"
 
       - name: Upload APK
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
@@ -213,7 +213,7 @@ jobs:
         uses: IamPekka058/removeLabels@82c8d070189f04448d6ffe291a0e398c2a749a09 # v2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          labels: '⚗️ Request Build'
+          labels: "⚗️ Request Build"
 
       - name: Comment artifact links
         uses: RubberDuckCrew/artifact2pr@1d2777cac9898de6a6cb16eb32b5c738ea428787 # v1.1.1
@@ -261,8 +261,8 @@ jobs:
       - name: Commit pubspec.yaml
         uses: suzuki-shunsuke/commit-action@f12e2d628a4ab72dcefe7890ae07e8dbf1e201b9 # v0.1.1
         with:
-          commit_message: '🔖 Release v${{ inputs.release-version }} [skip ci]'
-          files: '${{ inputs.working-directory }}/pubspec.yaml'
+          commit_message: "🔖 Release v${{ inputs.release-version }} [skip ci]"
+          files: "${{ inputs.working-directory }}/pubspec.yaml"
           github_token: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
           fail_on_self_push: false
 
@@ -288,8 +288,8 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe # v2.6.1
         with:
-          tag_name: 'v${{ inputs.release-version }}'
-          name: '🔖 v${{ inputs.release-version }}'
+          tag_name: "v${{ inputs.release-version }}"
+          name: "🔖 v${{ inputs.release-version }}"
           draft: true
           prerelease: false
           files: |

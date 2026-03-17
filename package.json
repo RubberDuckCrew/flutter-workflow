@@ -1,0 +1,27 @@
+{
+  "name": "flutter-workflow",
+  "description": "A centralized, reusable GitHub Actions workflow for testing, building, and releasing Flutter applications.",
+  "keywords": [
+    "build",
+    "test",
+    "action",
+    "flutter"
+  ],
+  "homepage": "https://github.com/RubberDuckCrew/flutter-workflow#readme",
+  "bugs": {
+    "url": "https://github.com/RubberDuckCrew/flutter-workflow/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RubberDuckCrew/flutter-workflow.git"
+  },
+  "license": "MIT",
+  "author": "RubberDuckCrew",
+  "scripts": {
+    "lint": "prettier . --check",
+    "fix": "prettier . --write"
+  },
+  "devDependencies": {
+    "prettier": "3.8.1"
+  }
+}
