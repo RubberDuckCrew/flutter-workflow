@@ -52,7 +52,7 @@ on:
 
 jobs:
   flutter:
-    uses: RubberDuckCrew/flutter-workflow/.github/workflows/flutter-workflow.yml@v1
+    uses: RubberDuckCrew/flutter-workflow/.github/workflows/workflow-build.yml@v1
     with:
       app-name: my-app
       build-type: build
@@ -63,7 +63,7 @@ jobs:
 ```yaml
 jobs:
   release:
-    uses: RubberDuckCrew/flutter-workflow/.github/workflows/flutter-workflow.yml@v1
+    uses: RubberDuckCrew/flutter-workflow/.github/workflows/workflow-build.yml@v1
     with:
       app-name: my-app
       build-type: release
