@@ -1,0 +1,12 @@
+name: Add to project
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  run:
+    uses: RubberDuckCrew/.github/.github/workflows/action-add-project.yml@main
+    secrets:
+      RUBBERDUCKCREW_BOT_APP_ID: ${{ secrets.RUBBERDUCKCREW_BOT_APP_ID }}
+      RUBBERDUCKCREW_BOT_APP_PRIVATE_KEY: ${{ secrets.RUBBERDUCKCREW_BOT_APP_PRIVATE_KEY  }}
