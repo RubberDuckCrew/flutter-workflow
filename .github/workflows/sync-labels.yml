@@ -1,0 +1,17 @@
+name: Sync labels
+
+on:
+  schedule:
+    - cron: "0 3 * * 0"
+  push:
+    branches: [main]
+    paths: [.github/workflows/sync-labels.yml]
+  workflow_dispatch:
+
+jobs:
+  run:
+    uses: RubberDuckCrew/.github/.github/workflows/action-sync-labels.yml@main
+    permissions:
+      issues: write
+    with:
+      additional-config: ".github/labels.yml"
