@@ -12,7 +12,7 @@ on:
 
 jobs:
   actionlint:
-    uses: RubberDuckCrew/.github/.github/workflows/action-actionlint.yml@v1
+    uses: RubberDuckCrew/.github/.github/workflows/action-actionlint.yml@v2.0.0
 
   codelint:
     name: Code Lint
