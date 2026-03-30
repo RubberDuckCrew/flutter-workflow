@@ -11,6 +11,8 @@ on:
 jobs:
   run:
     uses: RubberDuckCrew/.github/.github/workflows/action-sync-webhook.yml@v2.0.0
+    with:
+      bot-app-id: ${{ vars.RUBBERDUCKCREW_BOT_APP_ID }}
     secrets:
-      RUBBERDUCKCREW_BOT_APP_PRIVATE_KEY: ${{ secrets.RUBBERDUCKCREW_BOT_APP_PRIVATE_KEY }}
+      BOT_APP_PRIVATE_KEY: ${{ secrets.RUBBERDUCKCREW_BOT_APP_PRIVATE_KEY }}
       WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
