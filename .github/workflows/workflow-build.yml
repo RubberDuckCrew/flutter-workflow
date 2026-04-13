@@ -168,33 +168,33 @@ jobs:
           mv build/app/symbols "$GITHUB_WORKSPACE/build-artifacts/symbols"
 
       - name: Upload APK
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           path: ${{ github.workspace }}/build-artifacts/${{ inputs.app-name }}_${{ steps.build_options.outputs.version_name }}.apk
           archive: false
 
       - name: Upload app bundle
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           path: ${{ github.workspace }}/build-artifacts/${{ inputs.app-name }}_${{ steps.build_options.outputs.version_name }}.aab
           archive: false
 
       - name: Upload symbols file
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ inputs.app-name }} ${{ steps.build_options.outputs.version_name }} Symbols
           path: ${{ github.workspace }}/build-artifacts/symbols
 
       - name: Upload size analysis apk
         if: inputs.build-type == 'size-analysis'
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           path: /home/runner/.flutter-devtools/apk-code-size-analysis_01.json
           archive: false
 
       - name: Upload pubspec.yaml
         if: inputs.build-type == 'release' && inputs.release-version
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           path: ${{ inputs.working-directory }}/pubspec.yaml
           archive: false
