@@ -14,12 +14,8 @@
   "customManagers": [
     {
       "customType": "regex",
-      "managerFilePatterns": [
-        "/(^|/)build\\.gradle\\.kts$/"
-      ],
-      "matchStrings": [
-        "ndkVersion = \"(?<currentValue>[^\"]+)\""
-      ],
+      "managerFilePatterns": ["/(^|/)build\\.gradle\\.kts$/"],
+      "matchStrings": ["ndkVersion = \"(?<currentValue>[^\"]+)\""],
       "depNameTemplate": "Android NDK",
       "datasourceTemplate": "custom.ndk"
     }
