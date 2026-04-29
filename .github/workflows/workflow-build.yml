@@ -163,32 +163,39 @@ jobs:
         if: inputs['build-type'] == 'size-analysis'
         run: flutter build apk ${{ steps.build_options.outputs.build_args }} --analyze-size --target-platform android-arm64
 
+      - name: Rename build artifacts
+        run: |
+          BUILD_DIR="build/app/outputs"
+          ARTIFACTS_DIR="$GITHUB_WORKSPACE/build-artifacts"
+          BASE_NAME="$ARTIFACTS_DIR/${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}"
+          mkdir -p "$ARTIFACTS_DIR"
+          mv "$BUILD_DIR/flutter-apk/app-arm64-v8a-${{ steps.build_options.outputs.flavor }}-release.apk" "${BASE_NAME}_arm64-v8a.apk" || echo "arm64-v8a APK not found, skipping"
+          mv "$BUILD_DIR/flutter-apk/app-armeabi-v7a-${{ steps.build_options.outputs.flavor }}-release.apk" "${BASE_NAME}_armeabi-v7a.apk" || echo "armeabi-v7a APK not found, skipping"
+          mv "$BUILD_DIR/flutter-apk/app-x86_64-${{ steps.build_options.outputs.flavor }}-release.apk" "${BASE_NAME}_x86_64.apk" || echo "x86_64 APK not found, skipping"
+          mv "$BUILD_DIR/bundle/${{ steps.build_options.outputs.flavor }}Release/app-${{ steps.build_options.outputs.flavor }}-release.aab" "$BASE_NAME.aab" || echo "App bundle not found, skipping"
+
       - name: Upload APK arm64-v8a
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: ${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}_arm64-v8a.apk
-          path: ${{ inputs['working-directory'] }}/build/app/outputs/flutter-apk/app-arm64-v8a-${{ steps.build_options.outputs.flavor }}-release.apk
+          path: build-artifacts/${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}_arm64-v8a.apk
           archive: false
 
       - name: Upload APK armeabi-v7a
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: ${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}_armeabi-v7a.apk
-          path: ${{ inputs['working-directory'] }}/build/app/outputs/flutter-apk/app-armeabi-v7a-${{ steps.build_options.outputs.flavor }}-release.apk
+          path: build-artifacts/${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}_armeabi-v7a.apk
           archive: false
 
       - name: Upload APK x86_64
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: ${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}_x86_64.apk
-          path: ${{ inputs['working-directory'] }}/build/app/outputs/flutter-apk/app-x86_64-${{ steps.build_options.outputs.flavor }}-release.apk
+          path: build-artifacts/${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}_x86_64.apk
           archive: false
 
       - name: Upload app bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: ${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}.aab
-          path: ${{ inputs['working-directory'] }}/build/app/outputs/bundle/${{ steps.build_options.outputs.flavor }}Release/app-${{ steps.build_options.outputs.flavor }}-release.aab
+          path: build-artifacts/${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}.aab
           archive: false
 
       - name: Upload symbols file
