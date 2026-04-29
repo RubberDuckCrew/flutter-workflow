@@ -195,7 +195,7 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}_symbols
-          path: build/app/symbols
+          path: ${{ inputs['working-directory'] }}/build/app/symbols
 
       - name: Upload size analysis apk
         if: inputs['build-type'] == 'size-analysis'
