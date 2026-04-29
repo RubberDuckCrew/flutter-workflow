@@ -167,28 +167,28 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}_arm64-v8a.apk
-          path: build/app/outputs/flutter-apk/*arm64-v8a*
+          path: ${{ github.workspace }}/build/app/outputs/flutter-apk/*arm64-v8a*
           archive: false
 
       - name: Upload APK armeabi-v7a
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}_armeabi-v7a.apk
-          path: build/app/outputs/flutter-apk/*armeabi-v7a*
+          path: ${{ github.workspace }}/build/app/outputs/flutter-apk/*armeabi-v7a*
           archive: false
 
       - name: Upload APK x86_64
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}_x86_64.apk
-          path: build/app/outputs/flutter-apk/*x86_64*
+          path: ${{ github.workspace }}/build/app/outputs/flutter-apk/*x86_64*
           archive: false
 
       - name: Upload app bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}.aab
-          path: build/app/outputs/bundle/${{ steps.build_options.outputs.flavor }}Release/app-${{ steps.build_options.outputs.flavor }}-release.aab
+          path: ${{ github.workspace }}/build-artifacts/${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}.aab
           archive: false
 
       - name: Upload symbols file
@@ -208,7 +208,7 @@ jobs:
         if: inputs['build-type'] == 'release' && inputs['release-version']
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          path: ${{ inputs['working-directory'] }}/pubspec.yaml
+          path: ${{ github.workspace }}/pubspec.yaml
           archive: false
 
   post-request:
