@@ -20,23 +20,20 @@ permissions:
   contents: write
   pull-requests: write
 
-env:
-  RELEASE_VERSION: "test-${{ github.ref_name }}"
-
 jobs:
   cleanup:
     name: Cleanup from previous test runs
     runs-on: ubuntu-latest
     steps:
       - name: Delete previous test release
-        run: gh release delete v${{ github.env.RELEASE_VERSION }} --cleanup-tag -y || echo "No previous release to delete"
+        run: gh release delete vtest-${{ github.ref_name }} --cleanup-tag -y || echo "No previous release to delete"
 
   test:
     uses: ./.github/workflows/workflow-build.yml
     with:
       app-name: "test_app"
       build-type: ${{ github.event.inputs['build-type'] || 'release' }}
-      release-version: ${{ github.env.RELEASE_VERSION }}
+      release-version: "test-${{ github.ref_name }}"
       working-directory: "test_app"
       java-version: "21"
       skip-version-update: true
