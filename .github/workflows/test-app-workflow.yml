@@ -10,9 +10,6 @@ on:
   pull_request:
     branches:
       - main
-    paths:
-      - "test_app/**"
-      - ".github/workflows/workflow-build.yml"
   workflow_dispatch:
     inputs:
       build-type:
