@@ -147,20 +147,18 @@ jobs:
           {
             echo "flavor=$FLAVOR"
             echo "version_name=$VERSION_NAME"
-            echo "common_args=--release --flavor $FLAVOR --dart-define=GIT_COMMIT=$SHORT_SHA --obfuscate --split-debug-info=build/app/symbols $SKIP_SIGN"
-            echo "build_args_apk=${steps.build_options.outputs.common_args} --split-per-abi"
-            echo "build_args_aab=${steps.build_options.outputs.common_args}"
+            echo "build_args=--release --flavor $FLAVOR --dart-define=GIT_COMMIT=$SHORT_SHA --obfuscate --split-debug-info=build/app/symbols $SKIP_SIGN"
           } >> "$GITHUB_OUTPUT"
 
       - name: Build APK
-        run: flutter build apk ${{ steps.build_options.outputs.build_args_apk }}
+        run: flutter build apk ${{ steps.build_options.outputs.build_args }} --split-per-abi
 
       - name: Build app bundle
-        run: flutter build appbundle ${{ steps.build_options.outputs.build_args_aab }}
+        run: flutter build appbundle ${{ steps.build_options.outputs.build_args }}
 
       - name: Build APK for size analysis
         if: inputs['build-type'] == 'size-analysis'
-        run: flutter build apk ${{ steps.build_options.outputs.build_args_apk }} --analyze-size --target-platform android-arm64
+        run: flutter build apk ${{ steps.build_options.outputs.build_args }} --analyze-size --target-platform android-arm64
 
       - name: Rename build artifacts
         run: |
