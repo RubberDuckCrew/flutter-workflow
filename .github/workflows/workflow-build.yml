@@ -151,7 +151,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Build APK
-        run: flutter build apk ${{ steps.build_options.outputs.build_args }}
+        run: flutter build apk ${{ steps.build_options.outputs.build_args }} --split-per-abi
 
       - name: Build app bundle
         run: flutter build appbundle ${{ steps.build_options.outputs.build_args }}
@@ -163,19 +163,75 @@ jobs:
       - name: Rename build artifacts
         run: |
           mkdir -p "$GITHUB_WORKSPACE/build-artifacts"
-          mv build/app/outputs/flutter-apk/app-${{ steps.build_options.outputs.flavor }}-release.apk "$GITHUB_WORKSPACE/build-artifacts/${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}.apk"
+          for apk in build/app/outputs/flutter-apk/*.apk; do
+            [ -f "$apk" ] || continue
+            filename=$(basename "$apk")
+            case "$filename" in
+              *arm64-v8a*) abi=arm64-v8a ;;
+              *armeabi-v7a*) abi=armeabi-v7a ;;
+              *x86_64*) abi=x86_64 ;;
+              *) abi=universal ;;
+            esac
+            mv "$apk" "$GITHUB_WORKSPACE/build-artifacts/${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}_${abi}.apk" || true
+          done
           mv build/app/outputs/bundle/${{ steps.build_options.outputs.flavor }}Release/app-${{ steps.build_options.outputs.flavor }}-release.aab "$GITHUB_WORKSPACE/build-artifacts/${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}.aab"
           mv build/app/symbols "$GITHUB_WORKSPACE/build-artifacts/symbols"
 
-      - name: Upload APK
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - name: Check arm64 apk
+        id: check_arm64
+        run: |
+          if [ -f "$GITHUB_WORKSPACE/build-artifacts/${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}_arm64-v8a.apk" ]; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload APK arm64-v8a
+        if: steps.check_arm64.outputs.found == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          path: ${{ github.workspace }}/build-artifacts/${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}.apk
+          name: ${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}_arm64-v8a.apk
+          path: ${{ github.workspace }}/build-artifacts/${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}_arm64-v8a.apk
+          archive: false
+
+      - name: Check armeabi-v7a apk
+        id: check_armeabi
+        run: |
+          if [ -f "$GITHUB_WORKSPACE/build-artifacts/${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}_armeabi-v7a.apk" ]; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload APK armeabi-v7a
+        if: steps.check_armeabi.outputs.found == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}_armeabi-v7a.apk
+          path: ${{ github.workspace }}/build-artifacts/${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}_armeabi-v7a.apk
+          archive: false
+
+      - name: Check x86_64 apk
+        id: check_x86
+        run: |
+          if [ -f "$GITHUB_WORKSPACE/build-artifacts/${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}_x86_64.apk" ]; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload APK x86_64
+        if: steps.check_x86.outputs.found == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}_x86_64.apk
+          path: ${{ github.workspace }}/build-artifacts/${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}_x86_64.apk
           archive: false
 
       - name: Upload app bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
+          name: ${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}.aab
           path: ${{ github.workspace }}/build-artifacts/${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}.aab
           archive: false
 
@@ -266,10 +322,20 @@ jobs:
           github_token: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
           fail_on_self_push: false
 
-      - name: Download APK artifact
+      - name: Download APK arm64-v8a artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: ${{ inputs['app-name'] }}_${{ needs.build.outputs.version_name }}.apk
+          name: ${{ inputs['app-name'] }}_${{ needs.build.outputs.version_name }}_arm64-v8a.apk
+
+      - name: Download APK armeabi-v7a artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: ${{ inputs['app-name'] }}_${{ needs.build.outputs.version_name }}_armeabi-v7a.apk
+
+      - name: Download APK x86_64 artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: ${{ inputs['app-name'] }}_${{ needs.build.outputs.version_name }}_x86_64.apk
 
       - name: Download app bundle artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
@@ -293,6 +359,8 @@ jobs:
           draft: true
           prerelease: false
           files: |
-            ${{ inputs['app-name'] }}_${{ needs.build.outputs.version_name }}.apk
+            ${{ inputs['app-name'] }}_${{ needs.build.outputs.version_name }}_arm64-v8a.apk
+            ${{ inputs['app-name'] }}_${{ needs.build.outputs.version_name }}_armeabi-v7a.apk
+            ${{ inputs['app-name'] }}_${{ needs.build.outputs.version_name }}_x86_64.apk
             ${{ inputs['app-name'] }}_${{ needs.build.outputs.version_name }}.aab
             ${{ inputs['app-name'] }}_${{ needs.build.outputs.version_name }}_Symbols.zip
