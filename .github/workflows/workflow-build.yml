@@ -108,7 +108,9 @@ jobs:
         with:
           distribution: "temurin"
           java-version: ${{ inputs['java-version'] }}
-          cache: "gradle"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Update pubspec.yaml version
         if: inputs['build-type'] == 'release' && inputs['release-version']
