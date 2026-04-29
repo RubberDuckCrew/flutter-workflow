@@ -1,5 +1,5 @@
 name: Test, Build and Release
-run-name: Test, Build and Release ${{ inputs.release-version }}
+run-name: Test, Build and Release ${{ inputs['release-version'] }}
 
 on:
   workflow_call:
@@ -54,7 +54,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: ${{ inputs.working-directory }}
+        working-directory: ${{ inputs['working-directory'] }}
 
     steps:
       - name: Checkout app repository
@@ -63,7 +63,7 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@fd55f4c5af5b953cc57a2be44cb082c8f6635e8e # v2
         with:
-          flutter-version-file: ${{ inputs.working-directory }}/pubspec.yaml
+          flutter-version-file: ${{ inputs['working-directory'] }}/pubspec.yaml
           cache: true
 
       - name: Install pub dependencies
@@ -83,12 +83,12 @@ jobs:
     needs: test
     if: ${{ ( startsWith(github.ref, 'refs/tags/')
       || contains(github.event.pull_request.labels.*.name, '⚗️ Request Build')
-      || contains(fromJson('["build","size-analysis","release"]'), inputs.build-type) ) }}
+      || contains(fromJson('["build","size-analysis","release"]'), inputs['build-type']) ) }}
     runs-on: ubuntu-latest
 
     defaults:
       run:
-        working-directory: ${{ inputs.working-directory }}
+        working-directory: ${{ inputs['working-directory'] }}
 
     outputs:
       version_name: ${{ steps.build_options.outputs.version_name }}
@@ -100,20 +100,20 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@fd55f4c5af5b953cc57a2be44cb082c8f6635e8e # v2
         with:
-          flutter-version-file: ${{ inputs.working-directory }}/pubspec.yaml
+          flutter-version-file: ${{ inputs['working-directory'] }}/pubspec.yaml
           cache: true
 
       - name: Set up JDK
         uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
         with:
           distribution: "temurin"
-          java-version: ${{ inputs.java-version }}
+          java-version: ${{ inputs['java-version'] }}
 
       - name: Update pubspec.yaml version
-        if: inputs.build-type == 'release' && inputs.release-version
+        if: inputs['build-type'] == 'release' && inputs['release-version']
         run: |
           flutter pub global activate pub_version_plus
-          pubversion set ${{ inputs.release-version }}
+          pubversion set ${{ inputs['release-version'] }}
 
       - name: Install pub dependencies
         run: flutter pub get
@@ -139,10 +139,10 @@ jobs:
         run: |
           SHA="${{ github.event.pull_request.head.sha || github.sha }}"
           SHORT_SHA="${SHA:0:7}"
-          VERSION="${{ github.event.inputs.release-version }}"
+          VERSION="${{ github.event.inputs['release-version'] }}"
           VERSION_NAME="${VERSION:-$(echo "$GITHUB_REF_NAME" | tr / _)}_${SHORT_SHA}"
           VERSION_NAME="$(echo "$GITHUB_REF_NAME" | tr / _)_$SHORT_SHA"
-          FLAVOR="${{ inputs.build-type == 'release' && 'production' || 'staging' }}"
+          FLAVOR="${{ inputs['build-type'] == 'release' && 'production' || 'staging' }}"
           SKIP_SIGN="${{ steps.keystore.outputs.signing_available != 'true' && '-PskipSigning=true' || '' }}"
           {
             echo "flavor=$FLAVOR"
@@ -157,52 +157,52 @@ jobs:
         run: flutter build appbundle ${{ steps.build_options.outputs.build_args }}
 
       - name: Build APK for size analysis
-        if: inputs.build-type == 'size-analysis'
+        if: inputs['build-type'] == 'size-analysis'
         run: flutter build apk ${{ steps.build_options.outputs.build_args }} --analyze-size --target-platform android-arm64
 
       - name: Rename build artifacts
         run: |
           mkdir -p "$GITHUB_WORKSPACE/build-artifacts"
-          mv build/app/outputs/flutter-apk/app-${{ steps.build_options.outputs.flavor }}-release.apk "$GITHUB_WORKSPACE/build-artifacts/${{ inputs.app-name }}_${{ steps.build_options.outputs.version_name }}.apk"
-          mv build/app/outputs/bundle/${{ steps.build_options.outputs.flavor }}Release/app-${{ steps.build_options.outputs.flavor }}-release.aab "$GITHUB_WORKSPACE/build-artifacts/${{ inputs.app-name }}_${{ steps.build_options.outputs.version_name }}.aab"
+          mv build/app/outputs/flutter-apk/app-${{ steps.build_options.outputs.flavor }}-release.apk "$GITHUB_WORKSPACE/build-artifacts/${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}.apk"
+          mv build/app/outputs/bundle/${{ steps.build_options.outputs.flavor }}Release/app-${{ steps.build_options.outputs.flavor }}-release.aab "$GITHUB_WORKSPACE/build-artifacts/${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}.aab"
           mv build/app/symbols "$GITHUB_WORKSPACE/build-artifacts/symbols"
 
       - name: Upload APK
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          path: ${{ github.workspace }}/build-artifacts/${{ inputs.app-name }}_${{ steps.build_options.outputs.version_name }}.apk
+          path: ${{ github.workspace }}/build-artifacts/${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}.apk
           archive: false
 
       - name: Upload app bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          path: ${{ github.workspace }}/build-artifacts/${{ inputs.app-name }}_${{ steps.build_options.outputs.version_name }}.aab
+          path: ${{ github.workspace }}/build-artifacts/${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}.aab
           archive: false
 
       - name: Upload symbols file
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: ${{ inputs.app-name }} ${{ steps.build_options.outputs.version_name }} Symbols
+          name: ${{ inputs['app-name'] }} ${{ steps.build_options.outputs.version_name }} Symbols
           path: ${{ github.workspace }}/build-artifacts/symbols
 
       - name: Upload size analysis apk
-        if: inputs.build-type == 'size-analysis'
+        if: inputs['build-type'] == 'size-analysis'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           path: /home/runner/.flutter-devtools/apk-code-size-analysis_01.json
           archive: false
 
       - name: Upload pubspec.yaml
-        if: inputs.build-type == 'release' && inputs.release-version
+        if: inputs['build-type'] == 'release' && inputs['release-version']
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          path: ${{ inputs.working-directory }}/pubspec.yaml
+          path: ${{ inputs['working-directory'] }}/pubspec.yaml
           archive: false
 
   post-request:
     name: Post requested build
     needs: build
-    if: ${{ contains(github.event.pull_request.labels.*.name, '⚗️ Request Build') }}
+    if: ${{ contains(github.event.pull_request.labels.*.name, '⚗️ Request Build') || contains(fromJson('["build","size-analysis"]'), inputs['build-type']) }}
     runs-on: ubuntu-latest
 
     permissions:
@@ -224,7 +224,7 @@ jobs:
   release:
     name: Create release
     needs: build
-    if: inputs.build-type == 'release' && inputs.release-version
+    if: inputs['build-type'] == 'release' && inputs['release-version']
     runs-on: ubuntu-latest
 
     permissions:
@@ -235,7 +235,7 @@ jobs:
         id: check-secrets
         run: |
           echo "secrets_available=${{
-            inputs.bot-app-id &&
+            inputs['bot-app-id'] &&
             secrets.BOT_APP_PRIVATE_KEY &&
             'true' || ''
           }}" >> "$GITHUB_OUTPUT"
@@ -245,7 +245,7 @@ jobs:
         if: ${{ steps.check-secrets.outputs.secrets_available }}
         id: app-token
         with:
-          client-id: ${{ inputs.bot-app-id }}
+          client-id: ${{ inputs['bot-app-id'] }}
           private-key: ${{ secrets.BOT_APP_PRIVATE_KEY }}
 
       - name: Checkout repository
@@ -261,38 +261,38 @@ jobs:
       - name: Commit pubspec.yaml
         uses: suzuki-shunsuke/commit-action@44cc32c01e261a029c0161ff908a3a2895bfc46f # v0.1.2
         with:
-          commit_message: "🔖 Release v${{ inputs.release-version }} [skip ci]"
-          files: "${{ inputs.working-directory }}/pubspec.yaml"
+          commit_message: "🔖 Release v${{ inputs['release-version'] }} [skip ci]"
+          files: "${{ inputs['working-directory'] }}/pubspec.yaml"
           github_token: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
           fail_on_self_push: false
 
       - name: Download APK artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: ${{ inputs.app-name }}_${{ needs.build.outputs.version_name }}.apk
+          name: ${{ inputs['app-name'] }}_${{ needs.build.outputs.version_name }}.apk
 
       - name: Download app bundle artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: ${{ inputs.app-name }}_${{ needs.build.outputs.version_name }}.aab
+          name: ${{ inputs['app-name'] }}_${{ needs.build.outputs.version_name }}.aab
 
       - name: Download symbols artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: ${{ inputs.app-name }} ${{ needs.build.outputs.version_name }} Symbols
+          name: ${{ inputs['app-name'] }} ${{ needs.build.outputs.version_name }} Symbols
 
       - name: Zip symbols folder
         run: |
-          zip -r "${{ inputs.app-name }}_${{ needs.build.outputs.version_name }}_Symbols.zip" ./*.symbols
+          zip -r "${{ inputs['app-name'] }}_${{ needs.build.outputs.version_name }}_Symbols.zip" ./*.symbols
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
         with:
-          tag_name: "v${{ inputs.release-version }}"
-          name: "🔖 v${{ inputs.release-version }}"
+          tag_name: "v${{ inputs['release-version'] }}"
+          name: "🔖 v${{ inputs['release-version'] }}"
           draft: true
           prerelease: false
           files: |
-            ${{ inputs.app-name }}_${{ needs.build.outputs.version_name }}.apk
-            ${{ inputs.app-name }}_${{ needs.build.outputs.version_name }}.aab
-            ${{ inputs.app-name }}_${{ needs.build.outputs.version_name }}_Symbols.zip
+            ${{ inputs['app-name'] }}_${{ needs.build.outputs.version_name }}.apk
+            ${{ inputs['app-name'] }}_${{ needs.build.outputs.version_name }}.aab
+            ${{ inputs['app-name'] }}_${{ needs.build.outputs.version_name }}_Symbols.zip
