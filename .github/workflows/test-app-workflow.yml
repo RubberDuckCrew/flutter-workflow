@@ -32,3 +32,4 @@ jobs:
       release-version: "test"
       working-directory: "test_app"
       java-version: "21"
+      skip-version-update: true
