@@ -202,7 +202,9 @@ jobs:
   post-request:
     name: Post requested build
     needs: build
-    if: contains(github.event.pull_request.labels.*.name, '⚗️ Request Build') && github.event.pull_request.head.repo.fork == false
+    if:
+      ${{ contains(github.event.pull_request.labels.*.name, '⚗️ Request Build')
+      || contains(fromJson('["build","size-analysis"]'), inputs.build-type) ) }}
     runs-on: ubuntu-latest
 
     permissions:
