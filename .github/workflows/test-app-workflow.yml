@@ -1,0 +1,34 @@
+name: Test App Workflow
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "test_app/**"
+      - ".github/workflows/test-app-workflow.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "test_app/**"
+      - ".github/workflows/workflow-build.yml"
+  workflow_dispatch:
+    inputs:
+      build-type:
+        description: "Type of build (test, build)"
+        required: false
+        type: choice
+        default: "test"
+        options:
+          - test
+          - build
+
+jobs:
+  test-app:
+    uses: ./.github/workflows/workflow-build.yml
+    with:
+      app-name: "test_app"
+      build-type: ${{ github.event.inputs.build-type || 'test' }}
+      working-directory: "test_app"
+      java-version: "21"
