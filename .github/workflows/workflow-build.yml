@@ -151,11 +151,12 @@ jobs:
           VERSION_NAME="$(echo "${RELEASE_VERSION:-$GITHUB_REF_NAME}" | tr / -)_${SHORT_SHA}"
           FLAVOR="${{ inputs['build-type'] == 'release' && 'production' || 'staging' }}"
           SKIP_SIGN="${{ steps.keystore.outputs.signing_available != 'true' && '-PskipSigning=true' || '' }}"
+          BUILD_ARGS="--release --flavor $FLAVOR --dart-define=GIT_COMMIT=$SHORT_SHA --obfuscate --split-debug-info=build/app/symbols $SKIP_SIGN"
           {
             echo "flavor=$FLAVOR"
             echo "version_name=$VERSION_NAME"
-            echo "build_args=--release --flavor $FLAVOR --dart-define=GIT_COMMIT=$SHORT_SHA --obfuscate --split-debug-info=build/app/symbols $SKIP_SIGN"
-          } >> "$GITHUB_OUTPUT"
+            echo "build_args=$BUILD_ARGS"
+          } | tee -a "$GITHUB_OUTPUT"
 
       - name: Build APK
         run: flutter build apk ${{ steps.build_options.outputs.build_args }} --split-per-abi
