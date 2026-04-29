@@ -211,10 +211,9 @@ jobs:
           path: ${{ github.workspace }}/pubspec.yaml
           archive: false
 
-  post-request:
-    name: Post requested build
+  post-build:
+    name: Post build
     needs: build
-    if: ${{ contains(github.event.pull_request.labels.*.name, '⚗️ Request Build') }}
     runs-on: ubuntu-latest
 
     permissions:
@@ -222,12 +221,14 @@ jobs:
 
     steps:
       - name: Remove build request label
+        if: ${{ contains(github.event.pull_request.labels.*.name, '⚗️ Request Build') }}
         uses: IamPekka058/removeLabels@82c8d070189f04448d6ffe291a0e398c2a749a09 # v2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           labels: "⚗️ Request Build"
 
       - name: Comment artifact links
+        if: github.event_name == 'pull_request'
         uses: RubberDuckCrew/artifact2pr@1d2777cac9898de6a6cb16eb32b5c738ea428787 # v1.1.1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
