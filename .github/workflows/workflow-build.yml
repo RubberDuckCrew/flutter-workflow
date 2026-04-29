@@ -313,7 +313,4 @@ jobs:
           name: "🔖 v${{ inputs['release-version'] }}"
           draft: true
           prerelease: false
-          files: |
-            release-assets/*.apk
-            release-assets/*.aab
-            release-assets/*.zip
+          files: release-assets/*
