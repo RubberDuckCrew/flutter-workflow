@@ -32,7 +32,7 @@ on:
         required: false
         type: string
       skip-version-update:
-        description: "Whether to skip updating the version in pubspec.yaml (useful for non-release builds)"
+        description: "Whether to skip updating the version in pubspec.yaml"
         required: false
         type: boolean
         default: false
