@@ -118,10 +118,9 @@ jobs:
         uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e # v6.1.0
 
       - name: Update pubspec.yaml version
-        if: inputs['build-type'] == 'release' && inputs['release-version'] && ! inputs['skip-version-update']
+        if: ${{ inputs['build-type'] == 'release' && inputs['release-version'] && !inputs['skip-version-update'] }}
         run: |
           flutter pub global activate pub_version_plus
-          pubversion set ${{ inputs['release-version'] }}
 
       - name: Install pub dependencies
         run: flutter pub get
@@ -165,7 +164,7 @@ jobs:
         run: flutter build appbundle ${{ steps.build_options.outputs.build_args }}
 
       - name: Build APK for size analysis
-        if: inputs['build-type'] == 'size-analysis'
+        if: ${{ inputs['build-type'] == 'size-analysis' }}
         run: flutter build apk ${{ steps.build_options.outputs.build_args }} --analyze-size --target-platform android-arm64
 
       - name: Rename build artifacts
@@ -210,14 +209,14 @@ jobs:
           path: ${{ inputs['working-directory'] }}/build/app/symbols
 
       - name: Upload size analysis apk
-        if: inputs['build-type'] == 'size-analysis'
+        if: ${{ inputs['build-type'] == 'size-analysis' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           path: /home/runner/.flutter-devtools/apk-code-size-analysis_01.json
           archive: false
 
       - name: Upload pubspec.yaml
-        if: inputs['build-type'] == 'release' && inputs['release-version'] && ! inputs['skip-version-update']
+        if: ${{ inputs['build-type'] == 'release' && inputs['release-version'] && !inputs['skip-version-update'] }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           path: ${{ inputs['working-directory'] }}/pubspec.yaml
@@ -240,7 +239,7 @@ jobs:
           labels: "⚗️ Request Build"
 
       - name: Comment artifact links
-        if: github.event_name == 'pull_request'
+        if: ${{ github.event_name == 'pull_request' }}
         uses: RubberDuckCrew/artifact2pr@1d2777cac9898de6a6cb16eb32b5c738ea428787 # v1.1.1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -249,7 +248,7 @@ jobs:
   release:
     name: Create release
     needs: build
-    if: inputs['build-type'] == 'release' && inputs['release-version']
+    if: ${{ inputs['build-type'] == 'release' && inputs['release-version'] }}
     runs-on: ubuntu-latest
 
     permissions:
@@ -279,13 +278,13 @@ jobs:
           token: ${{ steps.app-token.outputs.token || github.token }}
 
       - name: Download pubspec.yaml
-        if: ! inputs['skip-version-update']
+        if: ${{ !inputs['skip-version-update'] }}
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: pubspec.yaml
 
       - name: Commit pubspec.yaml
-        if: ! inputs['skip-version-update']
+        if: ${{ !inputs['skip-version-update'] }}
         uses: suzuki-shunsuke/commit-action@06e3b49d4706498d325d29bd85adc82ecf2f5d8f # v1.0.0
         with:
           commit_message: "🔖 Release v${{ inputs['release-version'] }} [skip ci]"
