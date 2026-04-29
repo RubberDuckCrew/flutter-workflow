@@ -14,7 +14,7 @@ on:
         description: "Type of build (test, build)"
         required: false
         type: choice
-        default: "test"
+        default: "build"
         options:
           - test
           - build
@@ -28,6 +28,6 @@ jobs:
     uses: ./.github/workflows/workflow-build.yml
     with:
       app-name: "test_app"
-      build-type: ${{ github.event.inputs.build-type || 'test' }}
+      build-type: ${{ github.event.inputs.build-type || 'build' }}
       working-directory: "test_app"
       java-version: "21"
