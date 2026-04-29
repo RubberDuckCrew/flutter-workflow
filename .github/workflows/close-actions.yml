@@ -13,3 +13,13 @@ jobs:
       issues: write
       pull-requests: write
       actions: write
+
+  cleanup:
+    name: Cleanup from previous test runs
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_VERSION: "test-${{ github.ref_name }}"
+    steps:
+      - name: Delete previous test release
+        run: gh release delete v${{ github.env.RELEASE_VERSION }} --cleanup-tag -y || echo "No previous release to delete"

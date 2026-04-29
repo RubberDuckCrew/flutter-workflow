@@ -3,9 +3,6 @@ name: Test App Workflow
 on:
   push:
     branches: [main]
-    paths:
-      - "test_app/**"
-      - ".github/workflows/test-app-workflow.yml"
   pull_request:
     types: [opened, synchronize, reopened]
   workflow_dispatch:
@@ -23,13 +20,23 @@ permissions:
   contents: write
   pull-requests: write
 
+env:
+  RELEASE_VERSION: "test-${{ github.ref_name }}"
+
 jobs:
-  test-app:
+  cleanup:
+    name: Cleanup from previous test runs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete previous test release
+        run: gh release delete v${{ github.env.RELEASE_VERSION }} --cleanup-tag -y || echo "No previous release to delete"
+
+  test:
     uses: ./.github/workflows/workflow-build.yml
     with:
       app-name: "test_app"
       build-type: ${{ github.event.inputs['build-type'] || 'release' }}
-      release-version: "test"
+      release-version: ${{ github.env.RELEASE_VERSION }}
       working-directory: "test_app"
       java-version: "21"
       skip-version-update: true
