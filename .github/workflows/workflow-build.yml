@@ -203,7 +203,7 @@ jobs:
     name: Post requested build
     needs: build
     if:
-      ${{ contains(github.event.pull_request.labels.*.name, '⚗️ Request Build')
+      ${{ (contains(github.event.pull_request.labels.*.name, '⚗️ Request Build')
       || contains(fromJson('["build","size-analysis"]'), inputs.build-type) ) }}
     runs-on: ubuntu-latest
 
