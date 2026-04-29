@@ -2,14 +2,12 @@ name: Test App Workflow
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
     paths:
       - "test_app/**"
       - ".github/workflows/test-app-workflow.yml"
   pull_request:
-    branches:
-      - main
+    types: [opened, synchronize, reopened]
   workflow_dispatch:
     inputs:
       build-type:
