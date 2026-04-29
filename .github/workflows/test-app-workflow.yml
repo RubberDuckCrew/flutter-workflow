@@ -28,6 +28,7 @@ jobs:
     uses: ./.github/workflows/workflow-build.yml
     with:
       app-name: "test_app"
-      build-type: ${{ github.event.inputs['build-type'] || 'build' }}
+      build-type: ${{ github.event.inputs['build-type'] || 'release' }}
+      release-version: "test"
       working-directory: "test_app"
       java-version: "21"
