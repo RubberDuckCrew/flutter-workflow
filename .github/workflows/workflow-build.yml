@@ -163,9 +163,9 @@ jobs:
       - name: Rename build artifacts
         run: |
           mkdir -p "$GITHUB_WORKSPACE/build-artifacts"
-          mv build/app/outputs/flutter-apk/app-arm64-v8a-release.apk "$GITHUB_WORKSPACE/build-artifacts/${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}_arm64-v8a.apk"
-          mv build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk "$GITHUB_WORKSPACE/build-artifacts/${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}_armeabi-v7a.apk"
-          mv build/app/outputs/flutter-apk/app-x86_64-release.apk "$GITHUB_WORKSPACE/build-artifacts/${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}_x86_64.apk"
+          mv build/app/outputs/flutter-apk/app-${{ steps.build_options.outputs.flavor }}-arm64-v8a-release.apk "$GITHUB_WORKSPACE/build-artifacts/${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}_arm64-v8a.apk"
+          mv build/app/outputs/flutter-apk/app-${{ steps.build_options.outputs.flavor }}-armeabi-v7a-release.apk "$GITHUB_WORKSPACE/build-artifacts/${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}_armeabi-v7a.apk"
+          mv build/app/outputs/flutter-apk/app-${{ steps.build_options.outputs.flavor }}-x86_64-release.apk "$GITHUB_WORKSPACE/build-artifacts/${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}_x86_64.apk"
           mv build/app/outputs/bundle/${{ steps.build_options.outputs.flavor }}Release/app-${{ steps.build_options.outputs.flavor }}-release.aab "$GITHUB_WORKSPACE/build-artifacts/${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}.aab"
           mv build/app/symbols "$GITHUB_WORKSPACE/build-artifacts/symbols"
 
