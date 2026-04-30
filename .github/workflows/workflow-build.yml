@@ -31,6 +31,11 @@ on:
         description: "GitHub App ID for Release creation"
         required: false
         type: string
+      skip-version-update:
+        description: "Whether to skip updating the version in pubspec.yaml"
+        required: false
+        type: boolean
+        default: false
     secrets:
       KEY_PASSWORD:
         required: false
@@ -113,7 +118,7 @@ jobs:
         uses: gradle/actions/setup-gradle@50e97c2cd7a37755bbfafc9c5b7cafaece252f6e # v6.1.0
 
       - name: Update pubspec.yaml version
-        if: inputs['build-type'] == 'release' && inputs['release-version']
+        if: ${{ inputs['build-type'] == 'release' && inputs['release-version'] && !inputs['skip-version-update'] }}
         run: |
           flutter pub global activate pub_version_plus
           pubversion set ${{ inputs['release-version'] }}
@@ -142,16 +147,16 @@ jobs:
         run: |
           SHA="${{ github.event.pull_request.head.sha || github.sha }}"
           SHORT_SHA="${SHA:0:7}"
-          VERSION="${{ github.event.inputs['release-version'] }}"
-          VERSION_NAME="${VERSION:-$(echo "$GITHUB_REF_NAME" | tr / _)}_${SHORT_SHA}"
-          VERSION_NAME="$(echo "$GITHUB_REF_NAME" | tr / _)_$SHORT_SHA"
+          RELEASE_VERSION="${{ inputs['release-version'] }}"
+          VERSION_NAME="$(echo "${RELEASE_VERSION:-$GITHUB_REF_NAME}" | tr / -)_${SHORT_SHA}"
           FLAVOR="${{ inputs['build-type'] == 'release' && 'production' || 'staging' }}"
           SKIP_SIGN="${{ steps.keystore.outputs.signing_available != 'true' && '-PskipSigning=true' || '' }}"
+          BUILD_ARGS="--release --flavor $FLAVOR --dart-define=GIT_COMMIT=$SHORT_SHA --obfuscate --split-debug-info=build/app/symbols $SKIP_SIGN"
           {
             echo "flavor=$FLAVOR"
             echo "version_name=$VERSION_NAME"
-            echo "build_args=--release --flavor $FLAVOR --dart-define=GIT_COMMIT=$SHORT_SHA --obfuscate --split-debug-info=build/app/symbols $SKIP_SIGN"
-          } >> "$GITHUB_OUTPUT"
+            echo "build_args=$BUILD_ARGS"
+          } | tee -a "$GITHUB_OUTPUT"
 
       - name: Build APK
         run: flutter build apk ${{ steps.build_options.outputs.build_args }} --split-per-abi
@@ -160,99 +165,59 @@ jobs:
         run: flutter build appbundle ${{ steps.build_options.outputs.build_args }}
 
       - name: Build APK for size analysis
-        if: inputs['build-type'] == 'size-analysis'
+        if: ${{ inputs['build-type'] == 'size-analysis' }}
         run: flutter build apk ${{ steps.build_options.outputs.build_args }} --analyze-size --target-platform android-arm64
 
       - name: Rename build artifacts
         run: |
-          mkdir -p "$GITHUB_WORKSPACE/build-artifacts"
-          for apk in build/app/outputs/flutter-apk/*.apk; do
-            [ -f "$apk" ] || continue
-            filename=$(basename "$apk")
-            case "$filename" in
-              *arm64-v8a*) abi=arm64-v8a ;;
-              *armeabi-v7a*) abi=armeabi-v7a ;;
-              *x86_64*) abi=x86_64 ;;
-              *) abi=universal ;;
-            esac
-            mv "$apk" "$GITHUB_WORKSPACE/build-artifacts/${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}_${abi}.apk" || true
-          done
-          mv build/app/outputs/bundle/${{ steps.build_options.outputs.flavor }}Release/app-${{ steps.build_options.outputs.flavor }}-release.aab "$GITHUB_WORKSPACE/build-artifacts/${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}.aab"
-          mv build/app/symbols "$GITHUB_WORKSPACE/build-artifacts/symbols"
-
-      - name: Check arm64 apk
-        id: check_arm64
-        run: |
-          if [ -f "$GITHUB_WORKSPACE/build-artifacts/${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}_arm64-v8a.apk" ]; then
-            echo "found=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "found=false" >> "$GITHUB_OUTPUT"
-          fi
+          BUILD_DIR="build/app/outputs"
+          ARTIFACTS_DIR="$GITHUB_WORKSPACE/build-artifacts"
+          BASE_NAME="$ARTIFACTS_DIR/${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}"
+          mkdir -p "$ARTIFACTS_DIR"
+          mv "$BUILD_DIR/flutter-apk/app-arm64-v8a-${{ steps.build_options.outputs.flavor }}-release.apk" "${BASE_NAME}_arm64-v8a.apk" || echo "arm64-v8a APK not found, skipping"
+          mv "$BUILD_DIR/flutter-apk/app-armeabi-v7a-${{ steps.build_options.outputs.flavor }}-release.apk" "${BASE_NAME}_armeabi-v7a.apk" || echo "armeabi-v7a APK not found, skipping"
+          mv "$BUILD_DIR/flutter-apk/app-x86_64-${{ steps.build_options.outputs.flavor }}-release.apk" "${BASE_NAME}_x86_64.apk" || echo "x86_64 APK not found, skipping"
+          mv "$BUILD_DIR/bundle/${{ steps.build_options.outputs.flavor }}Release/app-${{ steps.build_options.outputs.flavor }}-release.aab" "$BASE_NAME.aab" || echo "App bundle not found, skipping"
 
       - name: Upload APK arm64-v8a
-        if: steps.check_arm64.outputs.found == 'true'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: ${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}_arm64-v8a.apk
-          path: ${{ github.workspace }}/build-artifacts/${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}_arm64-v8a.apk
+          path: build-artifacts/${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}_arm64-v8a.apk
           archive: false
-
-      - name: Check armeabi-v7a apk
-        id: check_armeabi
-        run: |
-          if [ -f "$GITHUB_WORKSPACE/build-artifacts/${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}_armeabi-v7a.apk" ]; then
-            echo "found=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "found=false" >> "$GITHUB_OUTPUT"
-          fi
 
       - name: Upload APK armeabi-v7a
-        if: steps.check_armeabi.outputs.found == 'true'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: ${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}_armeabi-v7a.apk
-          path: ${{ github.workspace }}/build-artifacts/${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}_armeabi-v7a.apk
+          path: build-artifacts/${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}_armeabi-v7a.apk
           archive: false
 
-      - name: Check x86_64 apk
-        id: check_x86
-        run: |
-          if [ -f "$GITHUB_WORKSPACE/build-artifacts/${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}_x86_64.apk" ]; then
-            echo "found=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "found=false" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Upload APK x86_64
-        if: steps.check_x86.outputs.found == 'true'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: ${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}_x86_64.apk
-          path: ${{ github.workspace }}/build-artifacts/${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}_x86_64.apk
+          path: build-artifacts/${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}_x86_64.apk
           archive: false
 
       - name: Upload app bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: ${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}.aab
-          path: ${{ github.workspace }}/build-artifacts/${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}.aab
+          path: build-artifacts/${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}.aab
           archive: false
 
       - name: Upload symbols file
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: ${{ inputs['app-name'] }} ${{ steps.build_options.outputs.version_name }} Symbols
-          path: ${{ github.workspace }}/build-artifacts/symbols
+          name: ${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}_symbols
+          path: ${{ inputs['working-directory'] }}/build/app/symbols
 
       - name: Upload size analysis apk
-        if: inputs['build-type'] == 'size-analysis'
+        if: ${{ inputs['build-type'] == 'size-analysis' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           path: /home/runner/.flutter-devtools/apk-code-size-analysis_01.json
           archive: false
 
       - name: Upload pubspec.yaml
-        if: inputs['build-type'] == 'release' && inputs['release-version']
+        if: ${{ inputs['build-type'] == 'release' && inputs['release-version'] && !inputs['skip-version-update'] }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           path: ${{ inputs['working-directory'] }}/pubspec.yaml
@@ -275,7 +240,7 @@ jobs:
           labels: "⚗️ Request Build"
 
       - name: Comment artifact links
-        if: github.event_name == 'pull_request'
+        if: ${{ github.event_name == 'pull_request' }}
         uses: RubberDuckCrew/artifact2pr@1d2777cac9898de6a6cb16eb32b5c738ea428787 # v1.1.1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -284,7 +249,7 @@ jobs:
   release:
     name: Create release
     needs: build
-    if: inputs['build-type'] == 'release' && inputs['release-version']
+    if: ${{ inputs['build-type'] == 'release' && inputs['release-version'] }}
     runs-on: ubuntu-latest
 
     permissions:
@@ -314,11 +279,14 @@ jobs:
           token: ${{ steps.app-token.outputs.token || github.token }}
 
       - name: Download pubspec.yaml
+        if: ${{ !inputs['skip-version-update'] }}
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: pubspec.yaml
+          path: ${{ inputs['working-directory'] }}
 
       - name: Commit pubspec.yaml
+        if: ${{ !inputs['skip-version-update'] }}
         uses: suzuki-shunsuke/commit-action@06e3b49d4706498d325d29bd85adc82ecf2f5d8f # v1.0.0
         with:
           commit_message: "🔖 Release v${{ inputs['release-version'] }} [skip ci]"
@@ -326,34 +294,25 @@ jobs:
           github_token: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
           fail_on_self_push: false
 
-      - name: Download APK arm64-v8a artifact
+      - name: Download APK artifacts
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: ${{ inputs['app-name'] }}_${{ needs.build.outputs.version_name }}_arm64-v8a.apk
-
-      - name: Download APK armeabi-v7a artifact
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: ${{ inputs['app-name'] }}_${{ needs.build.outputs.version_name }}_armeabi-v7a.apk
-
-      - name: Download APK x86_64 artifact
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: ${{ inputs['app-name'] }}_${{ needs.build.outputs.version_name }}_x86_64.apk
+          path: release-assets
+          pattern: ${{ inputs['app-name'] }}_${{ needs.build.outputs.version_name }}_*.apk
+          merge-multiple: true
 
       - name: Download app bundle artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: ${{ inputs['app-name'] }}_${{ needs.build.outputs.version_name }}.aab
+          path: release-assets
 
       - name: Download symbols artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: ${{ inputs['app-name'] }} ${{ needs.build.outputs.version_name }} Symbols
-
-      - name: Zip symbols folder
-        run: |
-          zip -r "${{ inputs['app-name'] }}_${{ needs.build.outputs.version_name }}_Symbols.zip" ./*.symbols
+          name: ${{ inputs['app-name'] }}_${{ needs.build.outputs.version_name }}_symbols
+          path: release-assets
+          skip-decompress: true
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
@@ -362,9 +321,4 @@ jobs:
           name: "🔖 v${{ inputs['release-version'] }}"
           draft: true
           prerelease: false
-          files: |
-            ${{ inputs['app-name'] }}_${{ needs.build.outputs.version_name }}_arm64-v8a.apk
-            ${{ inputs['app-name'] }}_${{ needs.build.outputs.version_name }}_armeabi-v7a.apk
-            ${{ inputs['app-name'] }}_${{ needs.build.outputs.version_name }}_x86_64.apk
-            ${{ inputs['app-name'] }}_${{ needs.build.outputs.version_name }}.aab
-            ${{ inputs['app-name'] }}_${{ needs.build.outputs.version_name }}_Symbols.zip
+          files: release-assets/*

@@ -20,14 +20,15 @@ A reusable GitHub Actions workflow to **test, build, analyze, and release Flutte
 
 ## Inputs
 
-| Name                | Description                                                    | Required | Default |
-| ------------------- | -------------------------------------------------------------- | -------- | ------- |
-| `release-version`   | Version to release (e.g., `1.2.3`, `v` is added automatically) | No       | —       |
-| `app-name`          | Name of the app (used for artifact naming)                     | No       | —       |
-| `build-type`        | Type of build (`test`, `build`, `size-analysis`, `release`)    | No       | `test`  |
-| `java-version`      | Java version used for Android build                            | No       | `21`    |
-| `working-directory` | Directory of the Flutter project                               | No       | `.`     |
-| `bot-app-id`        | GitHub App ID used for release creation                        | No       | —       |
+| Name                  | Description                                                    | Required | Default |
+| --------------------- | -------------------------------------------------------------- | -------- | ------- |
+| `release-version`     | Version to release (e.g., `1.2.3`, `v` is added automatically) | No       | —       |
+| `app-name`            | Name of the app (used for artifact naming)                     | No       | —       |
+| `build-type`          | Type of build (`test`, `build`, `size-analysis`, `release`)    | No       | `test`  |
+| `java-version`        | Java version used for Android build                            | No       | `21`    |
+| `working-directory`   | Directory of the Flutter project                               | No       | `.`     |
+| `bot-app-id`          | GitHub App ID used for release creation                        | No       | —       |
+| `skip-version-update` | Whether to skip updating the version in pubspec.yaml           | No       | `false` |
 
 ## Secrets
 

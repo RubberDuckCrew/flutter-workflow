@@ -13,3 +13,16 @@ jobs:
       issues: write
       pull-requests: write
       actions: write
+
+  cleanup:
+    name: Cleanup from previous test runs
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Delete previous test release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release delete vtest-${{ github.ref_name }} --cleanup-tag -y || echo "No previous release to delete"
