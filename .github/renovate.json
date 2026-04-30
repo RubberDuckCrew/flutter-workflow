@@ -1,7 +1,8 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "github>RubberDuckCrew/.github//configs/renovate/renovate-rubberduckcrew.json#v2.3.0"
+    "github>RubberDuckCrew/.github//configs/renovate/renovate-rubberduckcrew.json#v2.3.0",
+    "github>RubberDuckCrew/flutter-workflow//renovate-flutter.json"
   ],
   "reviewers": ["team:action-development"]
 }
