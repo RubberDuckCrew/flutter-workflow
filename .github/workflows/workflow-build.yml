@@ -241,7 +241,7 @@ jobs:
 
       - name: Comment artifact links
         if: ${{ github.event_name == 'pull_request' }}
-        uses: RubberDuckCrew/artifact2pr@1d2777cac9898de6a6cb16eb32b5c738ea428787 # v1.1.1
+        uses: RubberDuckCrew/artifact2pr@91fd0babddde5c5396f166817fcfc37fdd8f8885 # v1.1.2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           comment-if-no-artifacts: true
