@@ -69,7 +69,7 @@ jobs:
         uses: subosito/flutter-action@fd55f4c5af5b953cc57a2be44cb082c8f6635e8e # v2
         with:
           flutter-version-file: ${{ inputs['working-directory'] }}/pubspec.yaml
-          cache: true
+          cache: false
 
       - name: Install pub dependencies
         run: flutter pub get
@@ -106,7 +106,7 @@ jobs:
         uses: subosito/flutter-action@fd55f4c5af5b953cc57a2be44cb082c8f6635e8e # v2
         with:
           flutter-version-file: ${{ inputs['working-directory'] }}/pubspec.yaml
-          cache: true
+          cache: false
 
       - name: Set up JDK
         uses: actions/setup-java@0f481fcb613427c0f801b606911222b5b6f3083a # v5.5.0
