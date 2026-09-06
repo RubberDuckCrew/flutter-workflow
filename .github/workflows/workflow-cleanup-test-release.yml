@@ -1,0 +1,55 @@
+name: Cleanup Test Release
+
+on:
+  workflow_call:
+    inputs:
+      ref-name:
+        description: "The ref name to clean up (e.g. main or 89/merge)"
+        required: false
+        type: string
+        default: ""
+      pr-number:
+        description: "The pull request number to clean up"
+        required: false
+        type: number
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    name: Cleanup test releases
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete test releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TARGETS=()
+
+          if [ -n "${{ inputs['ref-name'] }}" ]; then
+            TARGETS+=("vtest-${{ inputs['ref-name'] }}")
+          fi
+
+          if [ -n "${{ inputs['pr-number'] }}" ]; then
+            TARGETS+=("vtest-${{ inputs['pr-number'] }}/merge")
+          fi
+
+          if [ ${#TARGETS[@]} -eq 0 ]; then
+            TARGETS+=("vtest-${{ github.ref_name }}")
+          fi
+
+          for target in "${TARGETS[@]}"; do
+            echo "Searching releases for target $target..."
+            RELEASE_IDS=$(gh api "repos/${{ github.repository }}/releases?per_page=100" \
+              --jq ".[] | select(.tag_name == \"$target\" or .name == \"🔖 $target\") | .id")
+
+            if [ -n "$RELEASE_IDS" ]; then
+              for id in $RELEASE_IDS; do
+                echo "Deleting release $id ($target)..."
+                gh api -X DELETE "repos/${{ github.repository }}/releases/$id"
+              done
+            else
+              echo "No previous release found for $target"
+            fi
+          done
