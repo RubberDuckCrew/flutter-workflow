@@ -45,7 +45,7 @@ jobs:
 
           for target in "${TARGETS[@]}"; do
             echo "Searching releases for target $target..."
-            RELEASE_IDS=$(gh api "repos/$REPO/releases?per_page=100" \
+            RELEASE_IDS=$(gh api --paginate "repos/$REPO/releases?per_page=100" \
               --jq '.[] | select(.tag_name == $target or .name == ("🔖 " + $target)) | .id' \
               --arg target "$target")
 
