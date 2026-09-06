@@ -35,7 +35,7 @@ jobs:
             TARGETS+=("vtest-$INPUT_REF_NAME")
           fi
 
-          if [ -n "$INPUT_PR_NUMBER" ]; then
+          if [[ "$INPUT_PR_NUMBER" =~ ^[1-9][0-9]*$ ]]; then
             TARGETS+=("vtest-$INPUT_PR_NUMBER/merge")
           fi
 
