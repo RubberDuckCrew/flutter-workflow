@@ -1,0 +1,6 @@
+# actionlint doesn't yet understand the `$/` self-repository `uses:` syntax.
+# See https://github.com/rhysd/actionlint/issues/711.
+paths:
+  .github/workflows/**:
+    ignore:
+      - 'reusable workflow call "\$/[^"]*" at "uses" is not following the format "owner/repo/path/to/workflow.yml@ref" nor "./path/to/workflow.yml"'
