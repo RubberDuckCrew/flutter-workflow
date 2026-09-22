@@ -79,6 +79,32 @@ jobs:
       BOT_APP_PRIVATE_KEY: ${{ secrets.BOT_APP_PRIVATE_KEY }}
 ```
 
+## Sync Dart SDK Workflow
+
+Reusable workflow that aligns the exact `sdk:` pin in `pubspec.yaml` with the
+Dart SDK version bundled with the configured Flutter version, so Renovate
+Flutter updates don't fail version solving. It runs `flutter pub get` and
+commits the sync to the current branch (never `main`).
+
+### Inputs
+
+| Name                | Description                         | Required | Default |
+| ------------------- | ----------------------------------- | -------- | ------- |
+| `working-directory` | Directory of the Flutter project    | No       | `.`     |
+| `ref`               | Commit, branch, or tag to check out | No       | —       |
+
+### Usage
+
+```yaml
+jobs:
+  sync-dart-sdk:
+    uses: RubberDuckCrew/flutter-workflow/.github/workflows/workflow-sync-dart-sdk.yml@v1
+    with:
+      working-directory: my-app
+```
+
+No secrets are required; the sync commit uses `GITHUB_TOKEN`.
+
 ## Build Triggers
 
 The build job runs when:
