@@ -13,6 +13,14 @@ on:
         required: false
         default: ""
         type: string
+      bot-app-id:
+        description: GitHub App ID. The App token re-triggers workflow runs on the sync push; GITHUB_TOKEN does not.
+        required: false
+        type: string
+    secrets:
+      BOT_APP_PRIVATE_KEY:
+        description: Private key of the GitHub App. Required only with bot-app-id.
+        required: false
     outputs:
       dart-sdk-version:
         description: The Dart SDK version the pin was synced to.
@@ -36,6 +44,14 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.ref != '' && inputs.ref || github.ref_name }}
+
+      - name: Create GitHub App token
+        id: app-token
+        if: ${{ inputs.bot-app-id != '' }}
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ inputs.bot-app-id }}
+          private-key: ${{ secrets.BOT_APP_PRIVATE_KEY }}
 
       - name: Extract Flutter version
         id: flutter
@@ -92,5 +108,5 @@ jobs:
           files: |-
             ${{ inputs.working-directory }}/pubspec.yaml
             ${{ inputs.working-directory }}/pubspec.lock
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
           fail_on_self_push: false
