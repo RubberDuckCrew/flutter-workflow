@@ -88,10 +88,17 @@ commits the sync to the current branch (never `main`).
 
 ### Inputs
 
-| Name                | Description                         | Required | Default |
-| ------------------- | ----------------------------------- | -------- | ------- |
-| `working-directory` | Directory of the Flutter project    | No       | `.`     |
-| `ref`               | Commit, branch, or tag to check out | No       | —       |
+| Name                | Description                                      | Required | Default |
+| ------------------- | ------------------------------------------------ | -------- | ------- |
+| `working-directory` | Directory of the Flutter project                 | No       | `.`     |
+| `ref`               | Commit, branch, or tag to check out              | No       | —       |
+| `bot-app-id`        | GitHub App ID for the token that pushes the sync | No       | —       |
+
+### Secrets
+
+| Name                  | Description            | Required |
+| --------------------- | ---------------------- | -------- |
+| `BOT_APP_PRIVATE_KEY` | GitHub App private key | No       |
 
 ### Usage
 
@@ -101,9 +108,18 @@ jobs:
     uses: RubberDuckCrew/flutter-workflow/.github/workflows/workflow-sync-dart-sdk.yml@v1
     with:
       working-directory: my-app
+      bot-app-id: ${{ vars.BOT_APP_ID }}
+    secrets:
+      BOT_APP_PRIVATE_KEY: ${{ secrets.BOT_APP_PRIVATE_KEY }}
 ```
 
-No secrets are required; the sync commit uses `GITHUB_TOKEN`.
+### GitHub App
+
+Prefer setting `bot-app-id` and `BOT_APP_PRIVATE_KEY`: commits pushed with a
+GitHub App token re-trigger workflow runs, so CI re-runs on the sync commit
+automatically (e.g., the failing checks of a Renovate Flutter bump turn green).
+Without it, the sync is pushed with `GITHUB_TOKEN`, which does not trigger new
+workflow runs and requires a manual re-run of the checks.
 
 ## Build Triggers
 
