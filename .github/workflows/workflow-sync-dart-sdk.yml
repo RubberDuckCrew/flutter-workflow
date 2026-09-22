@@ -71,6 +71,10 @@ jobs:
           set -euo pipefail
           new="${{ steps.resolve.outputs.version }}"
           current="$(grep -E '^  sdk:' pubspec.yaml | head -n 1 | sed -E 's/.*([0-9]+\.[0-9]+\.[0-9]+).*/\1/' || true)"
+          if [ -z "$current" ]; then
+            echo "::error::No 'sdk:' pin found in $(pwd)/pubspec.yaml."
+            exit 1
+          fi
           if [ "$current" = "$new" ]; then
             echo "Dart SDK pin already matches $new. Nothing to do."
             exit 0
@@ -85,6 +89,8 @@ jobs:
         uses: suzuki-shunsuke/commit-action@5eaa5ecce3ffe93d09a85b946dc5136e3713b1b7 # v1.1.0
         with:
           commit_message: "⬆️ Sync Dart SDK to ${{ steps.resolve.outputs.version }}"
-          files: "${{ inputs.working-directory }}/pubspec.yaml ${{ inputs.working-directory }}/pubspec.lock"
+          files: |-
+            ${{ inputs.working-directory }}/pubspec.yaml
+            ${{ inputs.working-directory }}/pubspec.lock
           github_token: ${{ secrets.GITHUB_TOKEN }}
           fail_on_self_push: false
