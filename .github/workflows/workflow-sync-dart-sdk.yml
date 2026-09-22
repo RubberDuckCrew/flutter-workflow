@@ -1,0 +1,90 @@
+name: Sync Dart SDK
+
+on:
+  workflow_call:
+    inputs:
+      working-directory:
+        description: The Flutter project directory relative to the repository root.
+        required: false
+        default: "."
+        type: string
+      ref:
+        description: Commit, branch, or tag to check out. Falls back to the triggering ref.
+        required: false
+        default: ""
+        type: string
+    outputs:
+      dart-sdk-version:
+        description: The Dart SDK version the pin was synced to.
+        value: ${{ jobs.sync.outputs.dart-sdk-version }}
+      changed:
+        description: Whether the Dart SDK pin was updated and a sync commit was pushed.
+        value: ${{ jobs.sync.outputs.changed }}
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    name: Sync Dart SDK pin
+    runs-on: ubuntu-latest
+    outputs:
+      dart-sdk-version: ${{ steps.resolve.outputs.version }}
+      changed: ${{ steps.sync.outputs.changed }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref != '' && inputs.ref || github.ref_name }}
+
+      - name: Extract Flutter version
+        id: flutter
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          version="$(grep -E '^  flutter:' pubspec.yaml | head -n 1 | sed -E 's/.*([0-9]+\.[0-9]+\.[0-9]+).*/\1/')"
+          if [ -z "$version" ]; then
+            echo "::error::Could not extract a semantic Flutter version from $(pwd)/pubspec.yaml."
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@fd55f4c5af5b953cc57a2be44cb082c8f6635e8e # v2
+        with:
+          flutter-version: ${{ steps.flutter.outputs.version }}
+          cache: true
+
+      - name: Resolve bundled Dart SDK version
+        id: resolve
+        run: |
+          version="$(flutter --version --machine | jq -r '.dartSdkVersion')"
+          if [ -z "$version" ]; then
+            echo "::error::Could not resolve the Dart SDK version bundled with Flutter ${{ steps.flutter.outputs.version }}."
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Sync Dart SDK pin
+        id: sync
+        working-directory: ${{ inputs.working-directory }}
+        run: |
+          set -euo pipefail
+          new="${{ steps.resolve.outputs.version }}"
+          current="$(grep -E '^  sdk:' pubspec.yaml | head -n 1 | sed -E 's/.*([0-9]+\.[0-9]+\.[0-9]+).*/\1/' || true)"
+          if [ "$current" = "$new" ]; then
+            echo "Dart SDK pin already matches $new. Nothing to do."
+            exit 0
+          fi
+          echo "Updating Dart SDK pin from ${current:-<none>} to $new."
+          sed -i -E "s/^  sdk:.*/  sdk: $new/" pubspec.yaml
+          flutter pub get
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Commit Dart SDK pin
+        if: ${{ steps.sync.outputs.changed == 'true' }}
+        uses: suzuki-shunsuke/commit-action@5eaa5ecce3ffe93d09a85b946dc5136e3713b1b7 # v1.1.0
+        with:
+          commit_message: "⬆️ Sync Dart SDK to ${{ steps.resolve.outputs.version }}"
+          files: "${{ inputs.working-directory }}/pubspec.yaml ${{ inputs.working-directory }}/pubspec.lock"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          fail_on_self_push: false
