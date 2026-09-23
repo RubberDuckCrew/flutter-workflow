@@ -162,6 +162,7 @@ jobs:
         run: flutter build apk ${{ steps.build_options.outputs.build_args }} --split-per-abi
 
       - name: Build app bundle
+        if: ${{ inputs['build-type'] == 'release' }}
         run: flutter build appbundle ${{ steps.build_options.outputs.build_args }}
 
       - name: Build APK for size analysis
@@ -198,6 +199,7 @@ jobs:
           archive: false
 
       - name: Upload app bundle
+        if: ${{ inputs['build-type'] == 'release' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           path: build-artifacts/${{ inputs['app-name'] }}_${{ steps.build_options.outputs.version_name }}.aab
