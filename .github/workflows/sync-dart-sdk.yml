@@ -1,0 +1,28 @@
+name: Sync Dart SDK
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - "mise.toml"
+      - "test_app/pubspec.yaml"
+      - "test_app/pubspec.lock"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-dart-sdk-${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    name: Sync Dart SDK pin
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+    uses: $/.github/workflows/workflow-sync-dart-sdk.yml
+    with:
+      ref: ${{ github.event.pull_request.head.sha }}
+      working-directory: test_app
+      bot-app-id: ${{ vars.RUBBERDUCKCREW_BOT_APP_ID }}
+    secrets:
+      BOT_APP_PRIVATE_KEY: ${{ secrets.RUBBERDUCKCREW_BOT_APP_PRIVATE_KEY }}
