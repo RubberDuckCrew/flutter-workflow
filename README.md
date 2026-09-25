@@ -165,6 +165,7 @@ When `build-type: release` and `release-version` is set:
 
 ## Notes
 
+- Caching: Flutter SDK, pub dependencies and Gradle User Home are cached between runs automatically. To use the persisted Gradle build cache, set `org.gradle.caching=true` in your `android/gradle.properties` (see the Gradle docs on build caching).
 - Signing is skipped automatically if no keystore is provided.
 - Forked PRs do not have access to secrets → no signing.
 - Artifacts are retained according to GitHub’s default retention policy.
